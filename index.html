@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Modern Glowing Page</title>
+    <style>
+        /* Отключаем выделение текста */
+        body {
+            user-select: none;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: black;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            perspective: 1000px; /* Добавляем перспективу для эффектов */
+        }
+
+        /* Стиль для анимации фона */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1), transparent 70%);
+            animation: pulse 4s infinite alternate;
+        }
+
+        /* Анимация фона */
+        @keyframes pulse {
+            from {
+                opacity: 0.5;
+            }
+            to {
+                opacity: 0.8;
+            }
+        }
+
+        /* Эффект плавного изменения цвета текста */
+        .center-text {
+            position: relative;
+            color: white;
+            font-size: 80px;
+            font-weight: bold;
+            text-shadow:
+                0 0 10px rgba(255, 255, 255, 0.8),
+                0 0 20px rgba(255, 255, 255, 0.6),
+                0 0 30px rgba(255, 255, 255, 0.4),
+                0 0 40px rgba(255, 255, 255, 0.3),
+                0 0 50px rgba(255, 255, 255, 0.2);
+            animation: glow 2s infinite alternate, colorShift 6s infinite;
+        }
+
+        /* Анимация свечения текста */
+        @keyframes glow {
+            from {
+                text-shadow:
+                    0 0 10px rgba(255, 255, 255, 0.5),
+                    0 0 20px rgba(255, 255, 255, 0.4),
+                    0 0 30px rgba(255, 255, 255, 0.3),
+                    0 0 40px rgba(255, 255, 255, 0.2),
+                    0 0 50px rgba(255, 255, 255, 0.1);
+            }
+            to {
+                text-shadow:
+                    0 0 20px rgba(255, 255, 255, 0.8),
+                    0 0 30px rgba(255, 255, 255, 0.6),
+                    0 0 40px rgba(255, 255, 255, 0.5),
+                    0 0 50px rgba(255, 255, 255, 0.4),
+                    0 0 60px rgba(255, 255, 255, 0.3);
+            }
+        }
+
+        /* Анимация изменения цвета текста */
+        @keyframes colorShift {
+            0% {
+                color: white;
+            }
+            25% {
+                color: #ffdd57;
+            }
+            50% {
+                color: #ff5f57;
+            }
+            75% {
+                color: #57ffad;
+            }
+            100% {
+                color: white;
+            }
+        }
+
+        /* Добавляем плавную анимацию вращения вокруг оси */
+        .center-text::before {
+            content: ' :) ';
+            position: absolute;
+            top: -200px;
+            left: -200px;
+            font-size: 150px;
+            opacity: 0.05;
+            color: white;
+            transform: rotate(45deg);
+            animation: rotateText 10s linear infinite;
+        }
+
+        /* Анимация вращения тени текста */
+        @keyframes rotateText {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Оформление эффекта размытого фона вокруг текста */
+        .glow-effect {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            filter: blur(100px);
+            animation: moveGlow 8s ease-in-out infinite alternate;
+        }
+
+        /* Анимация движения светящегося фона */
+        @keyframes moveGlow {
+            from {
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            to {
+                transform: translate(50%, 50%) scale(1.2);
+            }
+        }
+
+        /* Создаем дополнительные эффекты на странице */
+        .additional-glow-1 {
+            top: 20%;
+            left: 30%;
+        }
+
+        .additional-glow-2 {
+            top: 70%;
+            left: 60%;
+        }
+
+        .additional-glow-3 {
+            top: 50%;
+            left: 80%;
+        }
+    </style>
+</head>
+<body>
+    <!-- Центральный текст -->
+    <div class="center-text"> :) </div>
+
+    <!-- Дополнительные эффекты свечения -->
+    <div class="glow-effect additional-glow-1"></div>
+    <div class="glow-effect additional-glow-2"></div>
+    <div class="glow-effect additional-glow-3"></div>
+</body>
+</html>
