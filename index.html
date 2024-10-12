@@ -3,146 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Камера и индикатор громкости</title>
+    <title>Камера и местоположение</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
             margin: 0;
             padding: 0;
-            overflow: hidden; /* Отключение прокрутки */
             background-color: #f0f0f0;
         }
         h1 {
             margin-top: 20px;
             color: #333;
         }
+        #location {
+            margin: 20px auto;
+            font-size: 18px;
+            color: #333;
+        }
         #video {
-            width: 320px; /* Постоянный размер видео */
-            height: 240px; /* Постоянный размер видео */
-            border: 2px solid #007BFF; /* Синий контур */
+            width: 320px;
+            height: 240px;
+            border: 2px solid #007BFF;
             border-radius: 10px;
             background-color: #000;
-            display: none; /* Скрыть видео до начала */
+            display: none; /* Видео скрыто до нажатия кнопки */
             margin: 20px auto;
         }
-        #volumeMeter {
-            width: 80%; /* Ширина индикатора громкости */
-            height: 20px; /* Высота индикатора громкости */
-            background-color: #ddd;
-            border-radius: 5px;
-            margin: 20px auto;
-            position: relative;
-        }
-        #volumeLevel {
-            height: 100%;
-            background-color: #28a745; /* Зеленый цвет для уровня громкости */
-            border-radius: 5px;
-            transition: width 0.1s; /* Плавный переход при изменении громкости */
-        }
-        #start, #quality {
+        #start {
             padding: 10px 20px;
             font-size: 16px;
             color: white;
-            background-color: #007BFF; /* Синий фон кнопки */
+            background-color: #007BFF;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s;
-            margin: 10px;
         }
-        #start:hover, #quality:hover {
-            background-color: #0056b3; /* Темнее при наведении */
+        #start:hover {
+            background-color: #0056b3;
         }
         #start.stop {
-            background-color: #dc3545; /* Красный фон кнопки "Стоп" */
+            background-color: #dc3545; /* Красная кнопка для Стоп */
         }
     </style>
 </head>
 <body>
 
-<h1>Камера и индикатор громкости</h1>
-<select id="quality">
-    <option value="40x30">Минимальное качество (40x30)</option>
-    <option value="80x60">Очень низкое качество (80x60)</option>
-    <option value="160x120">Низкое качество (160x120)</option>
-    <option value="320x240" selected>Среднее качество (320x240)</option>
-    <option value="640x480">Высокое качество (640x480)</option>
-    <option value="1280x720">Очень высокое качество (1280x720)</option>
-</select>
+<h1>Камера и ваше местоположение</h1>
+
 <button id="start">Начать</button>
 <video id="video" autoplay></video>
-<div id="volumeMeter">
-    <div id="volumeLevel"></div>
-</div>
+
+<div id="location">Получение вашего местоположения...</div>
 
 <script>
     const video = document.getElementById('video');
     const startButton = document.getElementById('start');
-    const volumeLevel = document.getElementById('volumeLevel');
-    const qualitySelect = document.getElementById('quality');
+    const locationDiv = document.getElementById('location');
     let mediaStream;
 
+    // Запуск видеопотока с камеры
     startButton.addEventListener('click', async () => {
         if (startButton.textContent === 'Начать') {
             try {
-                // Получение выбранного разрешения
-                const resolution = qualitySelect.value.split('x');
-                const constraints = {
-                    video: {
-                        width: parseInt(resolution[0]),
-                        height: parseInt(resolution[1]),
-                    },
-                    audio: true,
-                };
-
-                // Запрос доступа к камере и микрофону
-                mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+                mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
                 video.srcObject = mediaStream;
                 video.style.display = 'block';
 
-                // Получаем источник аудио для анализа громкости
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const source = audioContext.createMediaStreamSource(mediaStream);
-                const analyser = audioContext.createAnalyser();
-                source.connect(analyser);
-                analyser.fftSize = 256;
-                const dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-                function updateVolume() {
-                    analyser.getByteFrequencyData(dataArray);
-                    const average = dataArray.reduce((sum, value) => sum + value) / dataArray.length;
-                    const volumePercentage = average / 255 * 100; // Преобразуем в проценты
-                    volumeLevel.style.width = volumePercentage + '%'; // Устанавливаем ширину индикатора
-                    requestAnimationFrame(updateVolume); // Обновляем уровень громкости
-                }
-                updateVolume(); // Начинаем обновление громкости
-
-                // Изменяем текст и цвет кнопки
                 startButton.textContent = 'Стоп';
                 startButton.classList.add('stop');
             } catch (error) {
                 console.error('Ошибка доступа к камере:', error);
-                alert('Не удалось получить доступ к камере. Пожалуйста, разрешите доступ.');
+                alert('Не удалось получить доступ к камере.');
             }
         } else {
             // Останавливаем видеопоток
             mediaStream.getTracks().forEach(track => track.stop());
             video.style.display = 'none';
 
-            // Возвращаем текст и цвет кнопки
             startButton.textContent = 'Начать';
             startButton.classList.remove('stop');
-            volumeLevel.style.width = '0%'; // Сбрасываем уровень громкости
         }
     });
 
-    qualitySelect.addEventListener('change', () => {
-        if (startButton.textContent === 'Стоп') {
-            startButton.click(); // Останавливаем видеопоток, если он работает
-            startButton.click(); // Запускаем снова с новым качеством
+    // Функция для получения координат пользователя
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+                    const altitude = position.coords.altitude || 'неизвестно';
+                    const altitudeAccuracy = position.coords.altitudeAccuracy || 'неизвестно';
+                    const heading = position.coords.heading || 'неизвестно';
+                    const speed = position.coords.speed || 'неизвестно';
+
+                    locationDiv.innerHTML = `
+                        <p>Широта: ${latitude}</p>
+                        <p>Долгота: ${longitude}</p>
+                        <p>Точность: ${accuracy} метров</p>
+                        <p>Высота: ${altitude}</p>
+                        <p>Точность высоты: ${altitudeAccuracy}</p>
+                        <p>Направление: ${heading}</p>
+                        <p>Скорость: ${speed} м/с</p>
+                    `;
+                },
+                (error) => {
+                    console.error('Ошибка при получении координат:', error);
+                    locationDiv.textContent = 'Не удалось получить координаты.';
+                }
+            );
+        } else {
+            locationDiv.textContent = 'Геолокация не поддерживается вашим браузером.';
         }
-    });
+    }
+
+    // Запуск функции получения местоположения при загрузке страницы
+    getLocation();
 </script>
 
 </body>
