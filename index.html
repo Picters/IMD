@@ -18,8 +18,6 @@
             color: #333;
         }
         #video {
-            width: 300px; /* Ширина камеры */
-            height: 300px; /* Высота камеры */
             border: 2px solid #007BFF; /* Синий контур */
             border-radius: 10px;
             background-color: #000;
@@ -40,7 +38,7 @@
             border-radius: 5px;
             transition: width 0.1s; /* Плавный переход при изменении громкости */
         }
-        #start {
+        #start, #quality {
             padding: 10px 20px;
             font-size: 16px;
             color: white;
@@ -49,15 +47,24 @@
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s;
+            margin: 10px;
         }
-        #start:hover {
+        #start:hover, #quality:hover {
             background-color: #0056b3; /* Темнее при наведении */
+        }
+        #start.stop {
+            background-color: #dc3545; /* Красный фон кнопки "Стоп" */
         }
     </style>
 </head>
 <body>
 
 <h1>Камера и индикатор громкости</h1>
+<select id="quality">
+    <option value="low">Очень низкое качество</option>
+    <option value="medium">Среднее качество</option>
+    <option value="high" selected>Высокое качество</option>
+</select>
 <button id="start">Начать</button>
 <video id="video" autoplay></video>
 <div id="volumeMeter">
@@ -68,33 +75,80 @@
     const video = document.getElementById('video');
     const startButton = document.getElementById('start');
     const volumeLevel = document.getElementById('volumeLevel');
+    const qualitySelect = document.getElementById('quality');
+    let mediaStream;
 
     startButton.addEventListener('click', async () => {
-        try {
-            // Запрос доступа к камере и микрофону
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            video.srcObject = stream;
-            video.style.display = 'block';
+        if (startButton.textContent === 'Начать') {
+            try {
+                // Получение выбранного качества
+                let constraints;
+                switch (qualitySelect.value) {
+                    case 'low':
+                        constraints = {
+                            video: { width: 160, height: 120, frameRate: { ideal: 15 } },
+                            audio: true
+                        };
+                        break;
+                    case 'medium':
+                        constraints = {
+                            video: { width: 640, height: 480, frameRate: { ideal: 30 } },
+                            audio: true
+                        };
+                        break;
+                    case 'high':
+                        constraints = {
+                            video: { width: 1280, height: 720, frameRate: { ideal: 60 } },
+                            audio: true
+                        };
+                        break;
+                }
 
-            // Получаем источник аудио для анализа громкости
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const source = audioContext.createMediaStreamSource(stream);
-            const analyser = audioContext.createAnalyser();
-            source.connect(analyser);
-            analyser.fftSize = 256;
-            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                // Запрос доступа к камере и микрофону
+                mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = mediaStream;
+                video.style.display = 'block';
 
-            function updateVolume() {
-                analyser.getByteFrequencyData(dataArray);
-                const average = dataArray.reduce((sum, value) => sum + value) / dataArray.length;
-                const volumePercentage = average / 255 * 100; // Преобразуем в проценты
-                volumeLevel.style.width = volumePercentage + '%'; // Устанавливаем ширину индикатора
-                requestAnimationFrame(updateVolume); // Обновляем уровень громкости
+                // Получаем источник аудио для анализа громкости
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaStreamSource(mediaStream);
+                const analyser = audioContext.createAnalyser();
+                source.connect(analyser);
+                analyser.fftSize = 256;
+                const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+                function updateVolume() {
+                    analyser.getByteFrequencyData(dataArray);
+                    const average = dataArray.reduce((sum, value) => sum + value) / dataArray.length;
+                    const volumePercentage = average / 255 * 100; // Преобразуем в проценты
+                    volumeLevel.style.width = volumePercentage + '%'; // Устанавливаем ширину индикатора
+                    requestAnimationFrame(updateVolume); // Обновляем уровень громкости
+                }
+                updateVolume(); // Начинаем обновление громкости
+
+                // Изменяем текст и цвет кнопки
+                startButton.textContent = 'Стоп';
+                startButton.classList.add('stop');
+            } catch (error) {
+                console.error('Ошибка доступа к камере:', error);
+                alert('Не удалось получить доступ к камере. Пожалуйста, разрешите доступ.');
             }
-            updateVolume(); // Начинаем обновление громкости
-        } catch (error) {
-            console.error('Ошибка доступа к камере:', error);
-            alert('Не удалось получить доступ к камере. Пожалуйста, разрешите доступ.');
+        } else {
+            // Останавливаем видеопоток
+            mediaStream.getTracks().forEach(track => track.stop());
+            video.style.display = 'none';
+
+            // Возвращаем текст и цвет кнопки
+            startButton.textContent = 'Начать';
+            startButton.classList.remove('stop');
+            volumeLevel.style.width = '0%'; // Сбрасываем уровень громкости
+        }
+    });
+
+    qualitySelect.addEventListener('change', () => {
+        if (startButton.textContent === 'Стоп') {
+            startButton.click(); // Останавливаем видеопоток, если он работает
+            startButton.click(); // Запускаем снова с новым качеством
         }
     });
 </script>
