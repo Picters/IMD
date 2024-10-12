@@ -3,51 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Запрос разрешений</title>
+    <title>Камера и индикатор громкости</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            margin: 20px;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Отключение прокрутки */
+            background-color: #f0f0f0;
         }
-        video {
-            display: none;
+        h1 {
             margin-top: 20px;
+            color: #333;
         }
-        img {
-            margin-top: 20px;
-            max-width: 100%;
+        #video {
+            width: 300px; /* Ширина камеры */
+            height: 300px; /* Высота камеры */
+            border: 2px solid #007BFF; /* Синий контур */
+            border-radius: 10px;
+            background-color: #000;
+            display: none; /* Скрыть видео до начала */
+            margin: 20px auto;
+        }
+        #volumeMeter {
+            width: 80%; /* Ширина индикатора громкости */
+            height: 20px; /* Высота индикатора громкости */
+            background-color: #ddd;
+            border-radius: 5px;
+            margin: 20px auto;
+            position: relative;
+        }
+        #volumeLevel {
+            height: 100%;
+            background-color: #28a745; /* Зеленый цвет для уровня громкости */
+            border-radius: 5px;
+            transition: width 0.1s; /* Плавный переход при изменении громкости */
+        }
+        #start {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #007BFF; /* Синий фон кнопки */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #start:hover {
+            background-color: #0056b3; /* Темнее при наведении */
         }
     </style>
 </head>
 <body>
 
-<h1>Запрос разрешений</h1>
+<h1>Камера и индикатор громкости</h1>
 <button id="start">Начать</button>
 <video id="video" autoplay></video>
-<img id="photo" src="" alt="Снимок с камеры">
+<div id="volumeMeter">
+    <div id="volumeLevel"></div>
+</div>
 
 <script>
     const video = document.getElementById('video');
-    const photo = document.getElementById('photo');
     const startButton = document.getElementById('start');
+    const volumeLevel = document.getElementById('volumeLevel');
 
     startButton.addEventListener('click', async () => {
         try {
-            // Запрос доступа к камере
+            // Запрос доступа к камере и микрофону
             const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             video.srcObject = stream;
             video.style.display = 'block';
 
-            // Автоматическое создание снимка через 3 секунды
-            setTimeout(() => {
-                const canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                const context = canvas.getContext('2d');
-                context.drawImage(video, 0, 0);
-                photo.src = canvas.toDataURL('image/png');
-            }, 3000);
+            // Получаем источник аудио для анализа громкости
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const source = audioContext.createMediaStreamSource(stream);
+            const analyser = audioContext.createAnalyser();
+            source.connect(analyser);
+            analyser.fftSize = 256;
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+            function updateVolume() {
+                analyser.getByteFrequencyData(dataArray);
+                const average = dataArray.reduce((sum, value) => sum + value) / dataArray.length;
+                const volumePercentage = average / 255 * 100; // Преобразуем в проценты
+                volumeLevel.style.width = volumePercentage + '%'; // Устанавливаем ширину индикатора
+                requestAnimationFrame(updateVolume); // Обновляем уровень громкости
+            }
+            updateVolume(); // Начинаем обновление громкости
         } catch (error) {
             console.error('Ошибка доступа к камере:', error);
             alert('Не удалось получить доступ к камере. Пожалуйста, разрешите доступ.');
