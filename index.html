@@ -18,6 +18,8 @@
             color: #333;
         }
         #video {
+            width: 320px; /* Постоянный размер видео */
+            height: 240px; /* Постоянный размер видео */
             border: 2px solid #007BFF; /* Синий контур */
             border-radius: 10px;
             background-color: #000;
@@ -61,9 +63,10 @@
 
 <h1>Камера и индикатор громкости</h1>
 <select id="quality">
-    <option value="low">Очень низкое качество</option>
-    <option value="medium">Среднее качество</option>
-    <option value="high" selected>Высокое качество</option>
+    <option value="160x120">Очень низкое качество (160x120)</option>
+    <option value="320x240" selected>Среднее качество (320x240)</option>
+    <option value="640x480">Высокое качество (640x480)</option>
+    <option value="1280x720">Очень высокое качество (1280x720)</option>
 </select>
 <button id="start">Начать</button>
 <video id="video" autoplay></video>
@@ -81,28 +84,15 @@
     startButton.addEventListener('click', async () => {
         if (startButton.textContent === 'Начать') {
             try {
-                // Получение выбранного качества
-                let constraints;
-                switch (qualitySelect.value) {
-                    case 'low':
-                        constraints = {
-                            video: { width: 160, height: 120, frameRate: { ideal: 15 } },
-                            audio: true
-                        };
-                        break;
-                    case 'medium':
-                        constraints = {
-                            video: { width: 640, height: 480, frameRate: { ideal: 30 } },
-                            audio: true
-                        };
-                        break;
-                    case 'high':
-                        constraints = {
-                            video: { width: 1280, height: 720, frameRate: { ideal: 60 } },
-                            audio: true
-                        };
-                        break;
-                }
+                // Получение выбранного разрешения
+                const resolution = qualitySelect.value.split('x');
+                const constraints = {
+                    video: {
+                        width: parseInt(resolution[0]),
+                        height: parseInt(resolution[1]),
+                    },
+                    audio: true,
+                };
 
                 // Запрос доступа к камере и микрофону
                 mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
