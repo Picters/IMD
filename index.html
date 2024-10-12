@@ -16,6 +16,13 @@
             flex-direction: column;
             height: 100vh;
             color: #fff;
+            overflow: hidden; /* Отключаем прокрутку */
+            touch-action: none; /* Запрещаем жесты масштабирования и пролистывания */
+        }
+
+        /* Отключаем выделение текста */
+        * {
+            user-select: none;
         }
 
         .box {
@@ -59,7 +66,7 @@
             background-color: #dc3545; /* Красная кнопка для Стоп */
         }
 
-        #location {
+        #location, #deviceInfo, #ipInfo {
             font-size: 14px;
             color: #ccc;
             text-align: left;
@@ -81,10 +88,24 @@
         <div id="location">Получение вашего местоположения...</div>
     </div>
 
+    <!-- Блок с информацией об устройстве -->
+    <div class="box">
+        <h2>Информация об устройстве</h2>
+        <div id="deviceInfo">Получение информации об устройстве...</div>
+    </div>
+
+    <!-- Блок с IP-адресом -->
+    <div class="box">
+        <h2>IP-адрес</h2>
+        <div id="ipInfo">Получение IP-адреса...</div>
+    </div>
+
 <script>
     const video = document.getElementById('video');
     const startButton = document.getElementById('start');
     const locationDiv = document.getElementById('location');
+    const deviceInfoDiv = document.getElementById('deviceInfo');
+    const ipInfoDiv = document.getElementById('ipInfo');
     let mediaStream;
 
     // Запуск видеопотока с камеры
@@ -119,19 +140,11 @@
                     const latitude = position.coords.latitude;
                     const longitude = position.coords.longitude;
                     const accuracy = position.coords.accuracy;
-                    const altitude = position.coords.altitude || 'неизвестно';
-                    const altitudeAccuracy = position.coords.altitudeAccuracy || 'неизвестно';
-                    const heading = position.coords.heading || 'неизвестно';
-                    const speed = position.coords.speed || 'неизвестно';
 
                     locationDiv.innerHTML = `
                         <p>Широта: ${latitude}</p>
                         <p>Долгота: ${longitude}</p>
                         <p>Точность: ${accuracy} метров</p>
-                        <p>Высота: ${altitude}</p>
-                        <p>Точность высоты: ${altitudeAccuracy}</p>
-                        <p>Направление: ${heading}</p>
-                        <p>Скорость: ${speed} м/с</p>
                     `;
                 },
                 (error) => {
@@ -144,8 +157,31 @@
         }
     }
 
-    // Запуск функции получения местоположения при загрузке страницы
+    // Функция для получения информации об устройстве
+    function getDeviceInfo() {
+        const userAgent = navigator.userAgent;
+        const platform = navigator.platform;
+        const screenSize = `${screen.width}x${screen.height}`;
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+        deviceInfoDiv.innerHTML = `
+            <p>User Agent: ${userAgent}</p>
+            <p>Платформа: ${platform}</p>
+            <p>Размер экрана: ${screenSize}</p>
+            <p>Часовой пояс: ${timeZone}</p>
+        `;
+    }
+
+    // Функция для получения IP-адреса (можно использовать публичные методы браузера)
+    function getIPAddress() {
+        const ipAddress = "Не удалось получить IP-адрес без API"; // Заполнение заглушкой
+        ipInfoDiv.textContent = ipAddress;
+    }
+
+    // Запуск функций при загрузке страницы
     getLocation();
+    getDeviceInfo();
+    getIPAddress(); // Запуск функции получения IP-адреса
 </script>
 
 </body>
